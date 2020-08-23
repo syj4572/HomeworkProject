@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>신연중_수행평가</title>
+    <style>
+    button {
+        margin-top : 5px;
+    }
+    td {
+        border-bottom : 1px dotted gray;
+    }
+    tr:hover {
+        background-color : pink;
+    }
+    h2,h5 {
+        text-align : center;
+    }
+    #ccform, table {
+        width:60%;
+        margin-left : auto;
+        margin-right : auto;
+    }
+    #btoption {
+        text-align : center;
+    }
+    td {
+        text-align : center;
+    }
+    #ccform {
+        text-align : center;
+    }
+
+    </style>
+</head>
+<body>
+<h2 style="color:purple">뉴스 게시판</h2><br><br>
+
+<table>
+    <tr><th><span style="color:blue;">번호</span></th><th><span style="color:pink;">작성자</span></th><th><span style="color:red;">제목</span></th><th><span style="color:orange;">작성일</span></th><th><span style="color:green;">조회수</span></th></tr>
+{%for mdata in mlist %}
+    <tr id ="clickup" onclick="ajax_uu_request({{ mdata.pk }})">
+        <td>{{mdata.pk}}</td>
+        <td>{{mdata.writer}}</td>
+        <td>{{mdata.title}}</td>
+        <td>{{mdata.writedate}}</td>
+        <td id="num{{mdata.pk}}">{{mdata.cnt}}</td>
+    </tr>
+{% endfor %}
+</table>
+
+<h5>
+    {% if mlist.has_previous %}
+        <a href = '?page={{mlist.number|add:-1}}'>이전페이지</a>
+    {% endif %}
+    Page {{ mlist.number }} of {{ mlist.paginator.num_pages }}
+    {% if mlist.has_next %}
+        <a href = '?page={{mlist.number|add:+1}}'>다음페이지</a>
+    {% endif %}
+</h5>
+<br><br>
+
+<div id="btoption"><button type="button" onclick="displayInputForm()">뉴스 작성</button></div><br><br>
+<div id="ccform"  style="display:none">
+    <h1 style="color:purple"></h1>
+	<form method="post" action="{% url 'ccname' %}">
+        {% csrf_token %}
+		<input type="text" name="writer"  placeholder="작성자명을 입력해주세요"><br><br>
+        <input type="text" name="title"  placeholder="제목을 입력해주세요"><br><br>
+		<textarea style="margin-top:5px" name="content" cols="30" rows="5" placeholder="내용을 입력해주세요">
+ 		</textarea><br><br>
+ 		<button id="ok" type="submit" value="Submit">제출</button>
+ 		<button id="update" type="reset" value="Reset">재작성</button>
+        <button id="del" type="button" onclick="undisplayInputForm()">취소</button>
+	</form>
+</div>
+
+<!--<div id="newscheck"  style="display:none">-->
+<!--        <form method="post" action="{% url 'uuname' %}">-->
+<!--        {% csrf_token %}-->
+<!--        <input type="text" name="title" value="{{mdata.title}}"><br><br>-->
+<!--        <input type="text" name="write" value="{{mdata.write}}"><br><br>-->
+<!--        <textarea style="margin-top:5px" name="content" cols="30" rows="5" value="{{mdata.content}}">-->
+<!--        </textarea><br><br>-->
+<!--        <button onclick="display: none;">확인</button>-->
+<!-- 		<button type="reset" onclick="ajax_uu_request({{ mdata.pk }})">수정</button>-->
+<!--        <button onclick="dd_confirm('{{ mdata.name }}', {{ mdata.pk }})">삭제</button>-->
+<!--        </form>-->
+<!--    </div>-->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+
+     function displayInputForm() {
+        $('#ccform').css('display', 'block')
+     }
+     function undisplayInputForm() {
+        $('#ccform').css('display', 'none')
+     }
+
+     var backpk = 0;
+
+     function ajax_uu_request(pk) {
+        if (backpk == pk) {
+            alert("현재 페이지입니다.")
+        }
+        else {
+            $.getJSON("{% url 'uuname' %}?pk="+pk, function(jsonObj) {
+               $('#ccform').css('display', 'block')
+
+               const dom1 = $('[name="title"]');
+               const dom2 = $('[name="writer"]');
+               const dom3 = $('[name="content"]');
+               const dom4 = $('#ok');
+               const dom5 = $('#update');
+               const dom6 = $('#del');
+               const dom7 = $('#num'+pk);
+
+               dom1.removeAttr("placeholder");
+               dom1.attr("value", jsonObj.title);
+
+               dom2.removeAttr("placeholder");
+               dom2.attr("value", jsonObj.writer);
+
+               dom3.removeAttr("placeholder");
+               dom3.text(jsonObj.content);
+
+               dom4.attr("type","button");
+               dom4.attr("onclick","undisplayInputForm()");
+
+               dom5.attr("type","submit");
+
+               dom6.attr("onclick","dd_confirm('"+jsonObj.writer+"'," + pk + ")");
+
+               dom7.text(jsonObj.cnt)
+
+            $('#ccform h1').text("뉴스 내용")
+            $('#ccform form').attr("action", "{% url 'uuname' %}?pk="+pk)
+            $('#ccform #ok').text("확인")
+            $('#ccform #update').text("수정")
+            $('#ccform #del').text("삭제")
+            backpk = pk
+            });
+        }
+    }
+         function dd_confirm(writer, pk) {
+             let result = confirm(writer+"님의 글을 삭제하겠습니까??");
+             if( result )
+             location.href = "{% url 'ddname' %}?pk="+pk;
+     }
+</script>
+</body>
+</html>
